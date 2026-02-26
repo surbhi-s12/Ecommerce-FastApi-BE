@@ -1,32 +1,51 @@
-# version: "3.9"
+# version: '3.8'
 
 # services:
-#   product-db:
+#   postgres:
 #     image: postgres:15
-#     container_name: product-db
-#     restart: always
+#     container_name: postgres-db
 #     environment:
 #       POSTGRES_USER: user
 #       POSTGRES_PASSWORD: password
-#       POSTGRES_DB: product_db
+#       POSTGRES_DB: productdb
 #     ports:
 #       - "5432:5432"
 #     volumes:
-#       - product-data:/var/lib/postgresql/data  
+#       - product-data:/var/lib/postgresql/data
 
 #   product-service:
-#     build: ./product-service
+#     build:
+#       context: ./product-service
+#       dockerfile: Dockerfile
 #     container_name: product-service
-#     restart: always
-#     depends_on:
-#       - product-db
-#     env_file:
-#       - .env
 #     ports:
 #       - "8000:8000"
+#     depends_on:
+#       - postgres
+#     environment:
+#       DATABASE_URL: postgresql+psycopg2://user:password@postgres:5432/productdb
+
+#   pgadmin:
+#     image: dpage/pgadmin4
+#     container_name: pgadmin
+#     environment:
+#       PGADMIN_DEFAULT_EMAIL: admin@example.com
+#       PGADMIN_DEFAULT_PASSWORD: admin123
+#     ports:
+#       - "5050:80"
+#     depends_on:
+#       - postgres
+#     volumes:
+#       - pgadmin-data:/var/lib/pgadmin
 
 # volumes:
 #   product-data:
+#   pgadmin-data:
+
+
+
+
+
 
 
 version: '3.8'
@@ -36,13 +55,25 @@ services:
     image: postgres:15
     container_name: postgres-db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
       POSTGRES_DB: productdb
     ports:
       - "5432:5432"
     volumes:
       - product-data:/var/lib/postgresql/data
+
+  product-service:
+    build:
+      context: ./product-service
+      dockerfile: Dockerfile
+    container_name: product-service
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgresql+psycopg2://user:password@postgres:5432/productdb
 
   pgadmin:
     image: dpage/pgadmin4
@@ -56,6 +87,18 @@ services:
       - postgres
     volumes:
       - pgadmin-data:/var/lib/pgadmin
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok
+    restart: unless-stopped
+    command: http --host-header=rewrite product-service:8000
+    environment:
+      NGROK_AUTHTOKEN: 
+    depends_on:
+      - product-service
+    ports:
+      - "4040:4040"
 
 volumes:
   product-data:
