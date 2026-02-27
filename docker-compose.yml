@@ -42,8 +42,10 @@ services:
   ngrok:
     image: ngrok/ngrok:latest
     container_name: ngrok
-    restart: unless-stopped
-    command: http --host-header=rewrite product-service:8000
+    command: >
+      http
+      --log=stdout
+      product-service:8000
     environment:
       NGROK_AUTHTOKEN: 
     depends_on:
